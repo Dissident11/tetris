@@ -7,7 +7,7 @@ pygame.font.init()
 mixer.init()
 
 #dimensions
-SCREEN_WIDTH = 500
+SCREEN_WIDTH = 550
 SCREEN_HEIGHT = 700
 TILE_SIZE = 25
 
@@ -29,28 +29,30 @@ WHITE = (255, 255, 255)
 #game variables
 allowed_colours = [RED, GREEN, BLUE, PURPLE, ORANGE, YELLOW]
 COOLDOWN = 500
-SIDE_OFFSET = 100
+SIDE_OFFSET = 125
 BOTTOM_OFFSET = 50
 
 #rows and columns
 ROWS = (SCREEN_HEIGHT - BOTTOM_OFFSET) // TILE_SIZE
 COLUMNS = (SCREEN_WIDTH - 2*SIDE_OFFSET) // TILE_SIZE
 
+print(COLUMNS)
+
 #create screen and set caption
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Tetris")
 
 #load and scale button images
-play_again_image = pygame.image.load("play_again.png")
+play_again_image = pygame.image.load("assets/play_again.png")
 play_again_scaled_image = pygame.transform.scale(play_again_image, ((play_again_image.get_width() // 3),
                         (play_again_image.get_height() // 3)))
 
-exit_image = pygame.image.load("exit.png")
+exit_image = pygame.image.load("assets/exit.png")
 exit_scaled_image = pygame.transform.scale(exit_image, ((exit_image.get_width() // 6),
                         (exit_image.get_height() // 6)))
 
 #load mand play music
-pygame.mixer.music.load("tetris_main.mp3")
+pygame.mixer.music.load("assets/tetris_main.mp3")
 pygame.mixer.music.set_volume(0.5)
 pygame.mixer.music.play(-1, 0, 0)
 
@@ -64,6 +66,11 @@ def centeredx_text(surface, y, font, color, string, height):
     format = pygame.font.SysFont(font, height)
     text = format.render(string, True, color)
     return surface.blit(text, ((surface.get_width() -text.get_width())/2, y))
+
+def centeredy_text(surface, x, font, color, string, height):
+    format = pygame.font.SysFont(font, height)
+    text = format.render(string, True, color)
+    return surface.blit(text, ((x, (surface.get_height() - text.get_height())/2)))
 
 #tetris and their rotation
 I = [[[0, 0, 0, 0],
@@ -188,7 +195,7 @@ class Tetris:
         self.moving = True
         self.stop = False
         self.game_over = False
-        self.rotation = 0
+        self.rotation = randint(0, len(self.tetris) - 1)
         self.floor_time = 20
         self.shape = self.tetris[self.rotation]
         self.lenght = len(self.tetris[self.rotation][0])
@@ -214,7 +221,7 @@ class Tetris:
             self.left_counter = 0
             self.right_counter = 0
             if len(tetris) > 1:
-                for element in tetris[:-1]:
+                for element in tetris[:-2]:
                     for rect1 in element.rect_list:
                         for rect in self.rect_list:
                             temp_rect_down = pygame.Rect(rect[0], rect[1] + TILE_SIZE, rect[2], rect[3])
@@ -323,7 +330,7 @@ class Tetris:
 
                 self.rotate_counter = 0
                 if len(tetris) > 1:
-                    for element in tetris[:-1]:
+                    for element in tetris[:-2]:
                         for rect1 in element.rect_list:
                             for rect in self.rotated_list:
                                 if rect.colliderect(rect1) or rect.left < SIDE_OFFSET or rect.right > SCREEN_WIDTH - SIDE_OFFSET \
@@ -362,8 +369,9 @@ donut = [[1, 1, 1, 1],
 
 #tetris list
 tetris = []
+tetris.append(Tetris(choice(all_tetris), TILE_SIZE, COOLDOWN))
 
-highscore = 1
+highscore = 0
 
 #main function
 def main():
@@ -377,7 +385,7 @@ def main():
             clock.tick(FPS)
 
             #if all the drawn tetris aren't moving then create a new one
-            counter = len(tetris)
+            counter = len(tetris) - 1
             for element in tetris:
                 if element.moving == False and element.stop == True and element.game_over == False:
                     counter -= 1
@@ -411,26 +419,26 @@ def main():
                 grid.append(row)
 
             #rotate the last tetris created
-            tetris[-1].rotate()
+            tetris[-2].rotate()
 
             #draw all the tetris
-            for element in tetris:
+            for element in tetris[:-1]:
                 element.draw()
 
             #move the tetris only if it won't collide with others, or the borders, from above, left and right
-            tetris[-1].check()
-            tetris[-1].move_down()
-            tetris[-1].move_left()
-            tetris[-1].move_right()
+            tetris[-2].check()
+            tetris[-2].move_down()
+            tetris[-2].move_left()
+            tetris[-2].move_right()
 
             #check if the game is over
-            tetris[-1].gameover()
+            tetris[-2].gameover()
 
             #check complete row
             for r, row in enumerate(grid):
                 row_counter = COLUMNS
                 for square in row:
-                    for element in tetris[:-1]:
+                    for element in tetris[:-2]:
                         for rect in element.rect_list:
                             if square.colliderect(rect):
                                 row_counter -= 1
@@ -438,14 +446,14 @@ def main():
                 #create a list of the rectangles that have to be removed
                 if row_counter == 0:
                     remove_list = []
-                    for element in tetris[:-1]:
+                    for element in tetris[:-2]:
                         for rect in element.rect_list:
                             if rect.top == r * TILE_SIZE:
                                 remove_list.append(rect)
 
                     #remove those rectangles
                     for rect in remove_list:
-                        for element in tetris[:-1]:
+                        for element in tetris[:-2]:
                             try:
                                 element.rect_list.remove(rect)
                             except ValueError:
@@ -453,7 +461,7 @@ def main():
 
                     # create a list of the rectangles that have to be moved down by 1 tile
                     move_list = []
-                    for element in tetris[:-1]:
+                    for element in tetris[:-2]:
                         for rect in element.rect_list:
                             if rect.top < r * TILE_SIZE:
                                 move_list.append(rect)
@@ -464,15 +472,28 @@ def main():
 
                     score += 1
 
+            #update highscore
             if score > highscore:
                 highscore = score
 
-            #draw score
+            #draw score and highscore
             centeredx_text(screen, SCREEN_HEIGHT - BOTTOM_OFFSET, "futura", BLUE, "LINES: " + str(score), 20)
-            draw_text(screen, 4, SCREEN_HEIGHT // 2, "futura", WHITE, "HIGHSCORE: " + str(highscore), 20)
+            centeredy_text(screen, 4, "futura", WHITE, "HIGHSCORE: " + str(highscore), 20)
+
+            #draw next tetris
+            if len(tetris) > 1:
+                height = len(tetris[-1].tetris[tetris[-1].rotation])
+                for y, row in enumerate(tetris[-1].tetris[tetris[-1].rotation]):
+                    for x, i in enumerate(row):
+                        if i == 1:
+                            rect = pygame.Rect((SCREEN_WIDTH - SIDE_OFFSET + 5 + TILE_SIZE * x,
+                                                     SCREEN_HEIGHT // 2 - height*TILE_SIZE // 2 + TILE_SIZE * y, TILE_SIZE, TILE_SIZE))
+                            pygame.draw.rect(screen, tetris[-1].colour, rect)
+
+
 
             #gameover function
-            if tetris[-1].game_over:
+            if tetris[-2].game_over:
                 pygame.mixer.music.stop()
                 play_again = Button(screen, SCREEN_WIDTH // 2 - play_again_scaled_image.get_width() // 2,
                                     SCREEN_HEIGHT // 2 - 100, play_again_scaled_image.get_width(),
@@ -485,6 +506,7 @@ def main():
                 exit.draw()
                 if play_again.is_pressed_left():
                     tetris.clear()
+                    tetris.append(Tetris(choice(all_tetris), TILE_SIZE, COOLDOWN))
                     pygame.mixer.music.play(-1, 0, 0)
                     main()
                 elif exit.is_pressed_left():
