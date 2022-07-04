@@ -479,14 +479,16 @@ def main():
             #draw score and highscore
             centeredx_text(screen, SCREEN_HEIGHT - BOTTOM_OFFSET, "futura", BLUE, "LINES: " + str(score), 20)
             centeredy_text(screen, 4, "futura", WHITE, "HIGHSCORE: " + str(highscore), 20)
+            draw_text(screen, SCREEN_WIDTH - SIDE_OFFSET + 40, SCREEN_HEIGHT // 2 - 70, "futura", BLUE, "NEXT", 20)
 
             #draw next tetris
             if len(tetris) > 1:
                 height = len(tetris[-1].tetris[tetris[-1].rotation])
+                width = len(tetris[-1].tetris[tetris[-1].rotation][0])
                 for y, row in enumerate(tetris[-1].tetris[tetris[-1].rotation]):
                     for x, i in enumerate(row):
                         if i == 1:
-                            rect = pygame.Rect((SCREEN_WIDTH - SIDE_OFFSET + 5 + TILE_SIZE * x,
+                            rect = pygame.Rect((SCREEN_WIDTH - SIDE_OFFSET + width * 5 + TILE_SIZE * x,
                                                      SCREEN_HEIGHT // 2 - height*TILE_SIZE // 2 + TILE_SIZE * y, TILE_SIZE, TILE_SIZE))
                             pygame.draw.rect(screen, tetris[-1].colour, rect)
 
@@ -527,3 +529,5 @@ if __name__ == "__main__":
     main()
 
 pygame.quit()
+
+#highscore 52
